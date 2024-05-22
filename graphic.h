@@ -27,7 +27,7 @@ int fb_draw_char(struct fbuf *, int, int, font_descriptor_t *, char, int);
 
 void draw_background(struct fbuf *, int);
 
-void draw_cur_time(struct fbuf *, int);
+void draw_cur_time(struct fbuf *, int, int);
 
 #ifdef __cplusplus
 } /* extern "C"*/

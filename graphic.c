@@ -76,7 +76,6 @@ int fb_draw_char(struct fbuf *fb, int x, int y, font_descriptor_t *font, char ch
 				m = *(p++);
 			if(m & 0x8000) {
 				fb_draw_pixel(fb, x + i, y + j, c);
-				// printf("draw pixel x+i %d, y+j %d, c %d\n", x + i, y + j, c);
 			}
 			m <<= 1;
 		}
@@ -87,6 +86,7 @@ int fb_draw_char(struct fbuf *fb, int x, int y, font_descriptor_t *font, char ch
 void draw_background(struct fbuf *fb, int c) {
 	int x, y, i = 0;
 	char title[10] = {'M', 'Y', ' ', 'B', 'L', 'E', 'N', 'D', 'E', 'R'};
+	char count_down[5] = {'T', 'i', 'm', 'e', ':'};
 	
 	// draw frame
 	for(y = 0; y < 320; ++y) {
@@ -114,11 +114,25 @@ void draw_background(struct fbuf *fb, int c) {
 	}
 
 	// draw title
+	int pos = 192;
 	for(i = 0; i < 10; ++i) {
-		if(i == 2) continue;
-		fb_draw_char(fb, 200 + 8 * i, 80, &font_rom8x16, title[i], c);
+		if(i == 2) {
+			pos += 8;
+			continue;
+		}
+		pos += fb_draw_char(fb, pos, 80, &font_winFreeSystem14x16, title[i], c);
+	}
+	for(i = 0; i < 5; ++i) {
+		fb_draw_char(fb, 208 + 8 * i, 200, &font_rom8x16, count_down[i], c);
 	}
 }
 
-void draw_cur_time(struct fbuf *fb, int t) {
+void draw_cur_time(struct fbuf *fb, int t, int c) {
+	for(int i = 0; i < 16; ++i) {
+		for(int j = 0; j < 16; ++j) {
+			fb_draw_pixel(fb, j + 256, i + 200, 0);
+		}
+	}
+	fb_draw_char(fb, 256, 200, &font_rom8x16, t/10 + '0', c);
+	fb_draw_char(fb, 264, 200, &font_rom8x16, t%10 + '0', c);
 }

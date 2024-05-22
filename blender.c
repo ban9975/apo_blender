@@ -28,22 +28,25 @@
 #include "serialize_lock.h"
 
 int main(int argc, char *argv[]) {
-	printf("Hello World\n");
 	void *spiled_base;
 	void *parlcd_base;
-	void *servops2_base;
+	void *dcspdrv_base;
 	
 	spiled_base = map_phys_address(SPILED_REG_BASE_PHYS, SPILED_REG_SIZE, 0);
 	parlcd_base = map_phys_address(PARLCD_REG_BASE_PHYS, PARLCD_REG_SIZE, 0);
-	servops2_base = map_phys_address(SERVOPS2_REG_BASE_PHYS, SERVOPS2_REG_SIZE, 0);
+	dcspdrv_base = map_phys_address(DCSPDRV_REG_BASE_PHYS_0, DCSPDRV_REG_SIZE, 0);
+	*(volatile uint32_t *)(dcspdrv_base + DCSPDRV_REG_CR_o) = DCSPDRV_REG_CR_PWM_ENABLE_m;
+	*(volatile uint32_t *)(dcspdrv_base + DCSPDRV_REG_PERIOD_o) = 5000;
+	*(volatile uint32_t *)(dcspdrv_base + DCSPDRV_REG_DUTY_o) = 0 | DCSPDRV_REG_DUTY_DIR_A_m;
 	// parlcd_hx8357_init(parlcd_base);
 	
 	struct fbuf *fb = fb_init();
-	draw_background(fb, 0x3f);
+	draw_background(fb, 0xff00);
 	fb_update(fb);
 	uint32_t led_state, knobs_state;
-	uint8_t r_speed, g_time, r_knob, g_knob, state = STATE_SETTING;
-	time_t start_time;
+	uint8_t r_speed = 0, r_knob, g_knob, state = STATE_SETTING;
+	time_t start_time, g_time = 0, running_time;
+	uint32_t motor_speed;
 	bool r_set_speed, g_set_time, b_start;
 	bool r_ready = false, g_ready = false, b_started = false;
 
@@ -55,9 +58,9 @@ int main(int argc, char *argv[]) {
 		r_set_speed = (knobs_state >> 26) & 1;
 		g_set_time = (knobs_state >> 25) & 1;
 		b_start = (knobs_state >> 24) & 1;
-
+		
 		// convert values
-		g_knob = g_knob / 256 * 60;
+		g_knob = g_knob * 60 / 256;
 
 		switch(state) {
 		case STATE_SETTING:
@@ -102,16 +105,18 @@ int main(int argc, char *argv[]) {
 			// motor running
 			if(!b_started) {
 				// set motor speed
-				// TODO
-				*(volatile uint32_t *)(servops2_base + SERVOPS2_REG_CR_o) = 0x10f;
-       	*(volatile uint32_t *)(servops2_base + SERVOPS2_REG_PWMPER_o) = 1000000;
-				*(volatile uint32_t *)(servops2_base + SERVOPS2_REG_PWM1_o) = r_speed;
+				motor_speed = 500 + r_speed * 4500 / 256;
+				*(volatile uint32_t *)(dcspdrv_base + DCSPDRV_REG_DUTY_o) = motor_speed | DCSPDRV_REG_DUTY_DIR_A_m;
 				// start timer
 				start_time = time(NULL);
+				running_time = g_time;
 				b_started = true;
+				b_start = false;
+				sleep(1);
 			}
 			// count down
-			g_time -= (time(NULL) - start_time);
+			// printf("time pass = %d\n", time(NULL) - start_time);
+			g_time = running_time - (time(NULL) - start_time);
 
 			if(g_time <= 0) {
 				// finish
@@ -120,18 +125,23 @@ int main(int argc, char *argv[]) {
 				r_ready = false;
 				g_ready = false;
 				b_started = false;
+				*(volatile uint32_t *)(dcspdrv_base + DCSPDRV_REG_DUTY_o) = 0 | DCSPDRV_REG_DUTY_DIR_A_m;
 			}
 			else if(b_start) {
+				// printf("Stopped by user\n");
 				// stopped by user
 				state = STATE_SETTING;
 				r_ready = false;
 				g_ready = false;
 				b_started = false;
+				*(volatile uint32_t *)(dcspdrv_base + DCSPDRV_REG_DUTY_o) = 0 | DCSPDRV_REG_DUTY_DIR_A_m;
 			}
 			break;
 		default:
 			break;
 		}
+		// printf("r_knob = %d, g_knob = %d, r_speed = %d, g_time = %d\n", r_knob, g_knob, r_speed, g_time);
+		// printf("r_ready = %d, g_ready = %d\n", r_ready, g_ready);
 
 		// Change 32 bit LED
 		led_state = 1;
@@ -139,16 +149,18 @@ int main(int argc, char *argv[]) {
 			led_state *= 2;
 		}
 		led_state -= 1;
-		// printf("r = %d, led_state = %d\n", r, led_state);
 		*(volatile uint32_t*)(spiled_base + SPILED_REG_LED_LINE_o) = led_state;
 		
 		// Show time
-		draw_cur_time(fb, g_time);
+		if(!g_ready) {
+			draw_cur_time(fb, g_knob, 0xf000);
+		}
+		else {
+			draw_cur_time(fb, g_time, 0xff00);
+		}
 		fb_update(fb);
-	}
-  
- 
-  printf("Goodbye\n");
+		//sleep(2);
+	}  
  
   return 0;
 }
