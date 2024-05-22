@@ -2,6 +2,8 @@
 #define GRAPHIC_H
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +27,7 @@ int fb_draw_char(struct fbuf *, int, int, font_descriptor_t *, char, int);
 
 void draw_background(struct fbuf *, int);
 
+void draw_cur_time(struct fbuf *, int);
 
 #ifdef __cplusplus
 } /* extern "C"*/

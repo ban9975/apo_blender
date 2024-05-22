@@ -119,3 +119,6 @@ void draw_background(struct fbuf *fb, int c) {
 		fb_draw_char(fb, 200 + 8 * i, 80, &font_rom8x16, title[i], c);
 	}
 }
+
+void draw_cur_time(struct fbuf *fb, int t) {
+}
