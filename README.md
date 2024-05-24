@@ -41,7 +41,7 @@ void draw_cur_time(struct fbuf *fb, int t, int c);
 ```
 
 ## User Manual
-1. Connect MZAPO and DC motor in the way described in [Wiring](https://github.com/ban9975/apo_blender/edit/main/README.md#wiring) part.
+1. Connect MZAPO and DC motor in the way described in [Wiring](https://github.com/ban9975/apo_blender/blob/main/README.md#wiring) part.
 2. By turning the red knob, you can adjust the speed of the blender. The LED line indicates current speed. Press red knob to confirm the speed.
 3. By turning the green knob, you can adjust the time of the blender. The lcd screen shows current time. The maximum time is 59 seconds. Press green knob to confirm the time. If the time is set, it will be shown in yellow, otherwise red.
 4. After both speed and time set, the RGB led will change from yellow to green. This mean the blender is ready to start. Press blue knob to start the blender. If you adjust either speed or time at this state, it will go back to setting state. This can be detected by RGB led turns back to yellow. Only the changed parameter needs to be re-confirmed.
